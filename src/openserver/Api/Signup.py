@@ -71,7 +71,8 @@ async def main(config, args):
             [f"{args.json['username']}@{config.Serve.Domain}"],
             [],
             None,
-            sign_up_email
+            sign_up_email,
+            encrypted=True
         )
         with open(f"./Users/{args.json['username']}/Contacts/{args.json['username']}@{config.Serve.Domain}.json", 'w') as f:
             json.dump({

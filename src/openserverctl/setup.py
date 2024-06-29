@@ -235,7 +235,8 @@ class Install:
             [f"Administrator@{data["config"]["domain"]}"],
             [],
             None,
-            sign_up_email
+            sign_up_email,
+            encrypted=True
         )
         with open(f"./Users/Administrator/Contacts/Administrator@{data["config"]["domain"]}.json", 'w') as f:
             json.dump({
