@@ -1,5 +1,5 @@
 from flask import Response
-from Helpers.Communications import DB
+from openserver.Helpers.Communications import DB
 
 
 async def main(config, request):

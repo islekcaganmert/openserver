@@ -1,5 +1,5 @@
 import json
-from Helpers.Communications import DB
+from openserver.Helpers.Communications import DB
 from flask import Response
 import requests
 from cryptography.hazmat.primitives import serialization
