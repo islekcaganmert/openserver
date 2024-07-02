@@ -11,7 +11,6 @@ async def main(config, software_info):
             users.append(i)
     system = platform.system()
     if system == "Linux":
-        distro_info = platform.linux_distribution()
         os_data = {"family": "Linux", "name": distro.name(pretty=True), "version": ''}
     elif system == "Darwin":
         os_data = {"family": "Darwin", "name": "macOS", "version": platform.mac_ver()[0]}
