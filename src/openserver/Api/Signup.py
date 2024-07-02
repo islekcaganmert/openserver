@@ -8,7 +8,7 @@ from openserver.Helpers.Communications import DB
 from flask import Response
 from datetime import datetime, UTC
 import hashlib
-import Helpers.IdEntryValidation as validate
+import openserver.Helpers.IdEntryValidation as validate
 
 
 async def main(config, args):

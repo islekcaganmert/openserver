@@ -1,8 +1,8 @@
 import hashlib
 import json
 from flask import Response
-import Helpers.IdEntryValidation as validate
-import Helpers.Report
+import openserver.Helpers.IdEntryValidation as validate
+import openserver.Helpers.Report
 
 Report = Helpers.Report
 report = Report.report
