@@ -1,4 +1,5 @@
 import platform
+import distro
 import json
 import os
 
@@ -11,7 +12,7 @@ async def main(config, software_info):
     system = platform.system()
     if system == "Linux":
         distro_info = platform.linux_distribution()
-        os_data = {"family": "Linux", "name": distro_info[0], "version": distro_info[1]}
+        os_data = {"family": "Linux", "name": distro.name(pretty=True), "version": ''}
     elif system == "Darwin":
         os_data = {"family": "Darwin", "name": "macOS", "version": platform.mac_ver()[0]}
     elif system == "Windows":

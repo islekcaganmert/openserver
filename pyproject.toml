@@ -11,7 +11,17 @@ classifiers = [
     "Programming Language :: Python",
 ]
 requires-python = ">=3.10"
-dependencies = ["requests", "TheProtocols", "flask[async]", "pyyaml", "cryptography", "flask-sqlalchemy", "beautifulsoup4", "asyncio"]
+dependencies = [
+    "requests",
+    "TheProtocols",
+    "flask[async]",
+    "pyyaml",
+    "cryptography",
+    "flask-sqlalchemy",
+    "beautifulsoup4",
+    "asyncio",
+    "distro",
+]
 
 [project.urls]
 Donate = "https://www.buymeacoffee.com/islekcaganmert"
