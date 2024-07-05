@@ -3,7 +3,7 @@ import requests
 import json
 
 TARGET_SERVER = 'http://localhost:8000'
-app = Flask(__name__, static_url_path='/vercel')
+app = Flask(__name__)
 
 
 @app.route('/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE'])
@@ -39,4 +39,4 @@ def proxy(path):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=6000)
+    app.run(debug=False, host='0.0.0.0', port=6000)
