@@ -19,7 +19,6 @@ async def main(config, request):
     with open(path, 'w') as f:
         json.dump({
             "Relation": request.json['relation'],
-            "SMTP": json.loads(request.json['smtp']),
             "Socials": json.loads(request.json['socials'])
         }, f)
     return Response(status=200)

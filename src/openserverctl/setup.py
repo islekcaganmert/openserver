@@ -249,7 +249,6 @@ class Install:
         with open(f"./Users/Administrator/Contacts/Administrator@{data["config"]["domain"]}.json", 'w') as f:
             json.dump({
                 "Relation": "Self",
-                "SMTP": {},
                 "Socials": {}
             }, f)
 

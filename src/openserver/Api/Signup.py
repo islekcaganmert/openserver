@@ -77,7 +77,6 @@ async def main(config, args):
         with open(f"./Users/{args.json['username']}/Contacts/{args.json['username']}@{config.Serve.Domain}.json", 'w') as f:
             json.dump({
                 "Relation": "Self",
-                "SMTP": {},
                 "Socials": {}
             }, f)
 
