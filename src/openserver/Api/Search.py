@@ -195,7 +195,7 @@ async def search_web(config, request) -> list:
     return r
 
 
-async def main(config, request) -> list:
+async def main(config, request) -> dict:
     r = []
     tasks = []
     # Advertise health part
@@ -218,4 +218,6 @@ async def main(config, request) -> list:
     r = []
     for result in results:
         r += result
+        if '://' not in r[-1]['url']:
+            r[-1]['url'] = f"theprotocols://{r[-1]['url']}"
     return {'results': r}
