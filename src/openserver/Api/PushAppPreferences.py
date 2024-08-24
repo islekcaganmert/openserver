@@ -1,3 +1,4 @@
+import os
 import jwt
 from flask import Response
 import json
@@ -15,7 +16,9 @@ async def main(config, request):
         return Response(status=403)
     app: str = request.json['app']
     # noinspection PyShadowingBuiltins
-    dir: str = f'./Users/{username}/Library/Data/'
+    dir: str = f'./Users/{username}/Library/Preferences/'
+    if 'Preferences' not in os.listdir(f'./Users/{username}/Library'):
+        os.mkdir(f'./Users/{username}/Library/Preferences')
     data: dict = json.loads(request.json['data']) if isinstance(request.json['data'], str) else request.json['data']
     with open(f'{dir}/{app}', 'w') as f:
         json.dump(data, f)

@@ -20,7 +20,7 @@ async def main(config, request):
     if username == 'Guest':
         return Response(status=200)
     if request.json['chat'] == '/':
-        obj = json.loads(request.json['body'])
+        obj = json.loads(request.json['body']) if isinstance(request.json['body'], str) else request.json['body']
         if 'handler' not in obj:
             obj['handler'] = obj['id']
         if isinstance(obj['participants'], str):

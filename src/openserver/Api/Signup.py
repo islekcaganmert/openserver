@@ -58,11 +58,11 @@ async def main(config, args):
         os.mkdir(f'./Users/{args.json['username']}/')
         with open(f'./Users/{args.json['username']}/.ID', 'w') as f:
             json.dump(new_id, f)
-        for i in ['Library', 'Contacts', 'Library/Data', 'Notes', 'Reminders', 'Documents', 'Pictures', 'Movies', 'Music']:
+        for i in ['Library', 'Contacts', 'Library/Data', 'Library/Preferences', 'Notes', 'Reminders', 'Documents', 'Pictures', 'Movies', 'Music']:
             os.mkdir(f'./Users/{args.json['username']}/{i}/')
         os.system(f'cp -r ./profile_picture.png ./Users/{args.json['username']}/.PP.png')
         mails = DB(args.json['username'], create_now=True)
-        with open(f'./Templates/SignUpEmail.html', 'r') as f:
+        with open(f'./Templates/SignUpEmail.html') as f:
             sign_up_email = f.read()
             sign_up_email_title = sign_up_email.split('<title>')[1].split('</title>')[0]
         mails.add_mail(
@@ -77,7 +77,7 @@ async def main(config, args):
         with open(f"./Users/{args.json['username']}/Contacts/{args.json['username']}@{config.Serve.Domain}.json", 'w') as f:
             json.dump({
                 "Relation": "Self",
-                "Socials": {}
+                "Socials": []
             }, f)
 
     except KeyError:

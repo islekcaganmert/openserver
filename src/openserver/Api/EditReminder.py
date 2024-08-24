@@ -18,6 +18,6 @@ async def main(config, request):
         with open(f'./Users/{username}/Reminders/{request.json['list']}.json') as f:
             db = json.load(f)
             if int(request.json['id']) < len(db):
-                db[int(request.json['id'])] = json.loads(request.json['data'])
+                db[int(request.json['id'])] = json.loads(request.json['data']) if isinstance(request.json['data'], str) else request.json['data']
                 json.dump(db, f)
     return Response(status=200)

@@ -21,5 +21,5 @@ async def main(config, request):
         os.remove(path)
     else:
         with open(path, 'w') as f:
-            json.dump(json.loads(request.json['data']), f)
+            json.dump(json.loads(request.json['data']) if isinstance(request.json['data'], str) else request.json['data'], f)
     return Response(status=200)

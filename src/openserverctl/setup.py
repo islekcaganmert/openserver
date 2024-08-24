@@ -230,7 +230,7 @@ class Install:
         os.mkdir(f'./Users/Administrator/')
         with open(f'./Users/Administrator/.ID', 'w') as f:
             json.dump(data['admin'], f)
-        for i in ['Library', 'Contacts', 'Library/Data', 'Notes', 'Reminders', 'Documents', 'Pictures', 'Movies', 'Music']:
+        for i in ['Library', 'Contacts', 'Library/Data', 'Library/Preferences', 'Notes', 'Reminders', 'Documents', 'Pictures', 'Movies', 'Music']:
             os.mkdir(f'./Users/Administrator/{i}/')
         os.system(f'cp -r ./profile_picture.png ./Users/Administrator/.PP.png')
         mails = DB('Administrator', create_now=True)
@@ -249,7 +249,7 @@ class Install:
         with open(f"./Users/Administrator/Contacts/Administrator@{data["config"]["domain"]}.json", 'w') as f:
             json.dump({
                 "Relation": "Self",
-                "Socials": {}
+                "Socials": []
             }, f)
 
     @staticmethod

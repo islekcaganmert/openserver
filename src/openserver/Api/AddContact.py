@@ -19,6 +19,6 @@ async def main(config, request):
     with open(path, 'w') as f:
         json.dump({
             "Relation": request.json['relation'],
-            "Socials": json.loads(request.json['socials'])
+            "Socials": request.json['socials']
         }, f)
     return Response(status=200)
