@@ -1,3 +1,5 @@
+import jwt
+
 from openserver.Helpers.Report import report, DirectoryEscalation
 from TheProtocols import Deleted
 from flask import Response
@@ -5,7 +7,10 @@ import os
 
 
 async def main(config, request):
-    if request.json['current_user_username'] == 'Guest':
+    username = request.json.get('current_user_username', None)
+    if username is None:
+        username = jwt.decode(request.json.get('cred'), config.Serve.Secret, algorithms=['HS256'])['username']
+    if username == 'Guest':
         return Response(status=200)
     print(request.json['path'])
     path: list[str] = request.json['path'].split('/')
@@ -13,7 +18,6 @@ async def main(config, request):
         report(DirectoryEscalation)
         return Response(status=403)
     value: str = request.json['value']
-    username: str = request.json['current_user_username']
     if path[0] == '':
         path.pop(0)
     directory: str = f'./Users/{username}/Notes'

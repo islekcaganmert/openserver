@@ -1,3 +1,5 @@
+import jwt
+
 from openserver.Helpers.Communications import DB
 from flask import request
 
@@ -10,14 +12,25 @@ DirectoryEscalation = 'Hacking.Filesystem.Directory'
 
 
 def report(reason):
+    username = request.json.get('current_user_username', None)
+    if username is None:
+        secret = ''
+        with open(f'Server.yaml') as f:
+            for line in f:
+                if 'Secret' in line:
+                    secret = line.split(': ')[1].strip()
+                    break
+        username = jwt.decode(request.json.get('cred'), secret, algorithms=['HS256'])['username']
     if reason == PlusHacking:
-        subject, body = 'Hacker Alert', f'"{request.json["current_user_username"]}" tried to get free subscription. Detected and blocked.'
+        subject, body = 'Hacker Alert', f'"{username}" tried to get free subscription. Detected and blocked.'
     elif reason == MisconfiguredPayload:
         subject, body = 'Misconfigured Payload Sent', f'"{request.remote_addr}" sent a misconfigured payload. Connection dropped.'
     elif reason == ModificationToImmutable:
-        subject, body = 'Immutable Payload Modification', f'"{request.json["current_user_username"]}" tried to modify an immutable ID key. Changes rejected.'
+        subject, body = 'Immutable Payload Modification', f'"{username}" tried to modify an immutable ID key. Changes rejected.'
     elif reason == DirectoryEscalation:
-        subject, body = 'Directory Escalation', f'"{request.json["current_user_username"]}" tried to escalate directory. Connection dropped.'
+        subject, body = 'Directory Escalation', f'"{username}" tried to escalate directory. Connection dropped.'
+    else:
+        return
     DB('Administrator').add_mail(
         subject=subject,
         sender='SYSTEM',

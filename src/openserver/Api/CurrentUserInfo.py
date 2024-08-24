@@ -1,4 +1,6 @@
 import json
+
+import jwt
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from datetime import datetime, UTC
@@ -7,7 +9,9 @@ from flask import Response
 
 
 async def main(config, request):
-    username = request.json['current_user_username']
+    username = request.json.get('current_user_username', None)
+    if username is None:
+        username = jwt.decode(request.json.get('cred'), config.Serve.Secret, algorithms=['HS256'])['username']
     if username == 'Guest':
         id = {
             "birthday": "2000-01-01",

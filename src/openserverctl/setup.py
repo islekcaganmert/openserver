@@ -52,7 +52,8 @@ data = {
         "rules": {
             "new_accounts_allowed": True
         },
-        "storage": ['100MB', '1GB', '5GB', '20GB']
+        "storage": ['100MB', '1GB', '5GB', '20GB'],
+        "membership_plans": ["Free", "Plus", "Pro", "Ultra"]
     },
     "terms": ""
 }
@@ -147,7 +148,10 @@ class OOBE:
         if input('Do you want to configure rules now? (Y/n) ') != 'n':
             data['config']['rules']['new_accounts_allowed'] = yes_no('Do you want to allow new accounts?')
         for i in range(4):
-            inp = input(f'Enter storage limit for tier {i}: (ex. 100MB, 25GB, 2TB) ')
+            inp = input(f'Name the tier {i}: ')
+            data['config']['membership_plans'][i] = inp
+        for i in range(4):
+            inp = input(f"Enter storage limit for {data['config']['membership_plans'][i]}: (ex. 100MB, 25GB, 2TB) ")
             ok = False
             for j in ['MB', 'GB', 'TB']:
                 if inp.endswith(j):
@@ -167,7 +171,7 @@ class OOBE:
             f.write('<h1>Terms of Service</h1>\n')
         print('You will be redirected to your preferred text editor to write terms of service.')
         os.system(f"{input('Please enter the executable path of a text editor: ')} .OpenServer-Setup-Wizard")
-        with open('.OpenServer-Setup-Wizard', 'r') as f:
+        with open('.OpenServer-Setup-Wizard') as f:
             data['terms'] = f.read()
         os.remove('.OpenServer-Setup-Wizard')
 
@@ -189,6 +193,9 @@ class Install:
 
     @staticmethod
     def config():
+        secret = ''
+        for _ in range(128):
+            secret += '0123456789abcdef'[random.randint(0, 15)]
         with open('Server.yaml', 'a') as f:
             # Serve
             f.write('Serve:\n')
@@ -197,6 +204,7 @@ class Install:
             f.write('    Debug: false\n')
             f.write(f'    Secure: {"true" if data["config"]["secure"] else "false"}\n')
             f.write(f'    Domain: "{data["config"]["domain"]}"\n\n')
+            f.write(f'    Secret: {secret}\n\n')
             # Policies
             f.write(f'Policies:\n')
             f.write('    ToS: "ToS.html"\n')
@@ -207,9 +215,9 @@ class Install:
             for i in data['config']['rules']:
                 f.write(f'    {i}: {"true" if data["config"]["rules"][i] else "false"}\n')
             # Storage
-            f.write('\nStorage:\n')
+            f.write('\nMembership:\n')
             for i in range(4):
-                f.write(f'    Plus{i}: {data["config"]["storage"][i]}\n')
+                f.write(f'    {data["config"]["membership_plans"][i]}: {data["config"]["storage"][i]}\n')
             # Security
             f.write('\nSecurity:\n')
             f.write('    ImmutableIdEntries: ["birthday", "gender", "name", "surname", "rsa_private_key"]\n\n')
@@ -226,7 +234,7 @@ class Install:
             os.mkdir(f'./Users/Administrator/{i}/')
         os.system(f'cp -r ./profile_picture.png ./Users/Administrator/.PP.png')
         mails = DB('Administrator', create_now=True)
-        with open(f'./Templates/SignUpEmail.html', 'r') as f:
+        with open(f'./Templates/SignUpEmail.html') as f:
             sign_up_email = f.read()
             sign_up_email_title = sign_up_email.split('<title>')[1].split('</title>')[0]
         mails.add_mail(

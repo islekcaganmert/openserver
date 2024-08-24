@@ -1,4 +1,7 @@
 import json
+
+import jwt
+
 from openserver.Helpers.Communications import DB
 from flask import Response
 import requests
@@ -11,7 +14,10 @@ from Api.CurrentUserInfo import main as current_user_info
 
 
 async def main(config, request):
-    if request.json['current_user_username'] == 'Guest':
+    username = request.json.get('current_user_username', None)
+    if username is None:
+        username = jwt.decode(request.json.get('cred'), config.Serve.Secret, algorithms=['HS256'])['username']
+    if username == 'Guest':
         return Response(status=200)
     if request.json['chat'] == '/':
         obj = json.loads(request.json['body'])
@@ -19,16 +25,16 @@ async def main(config, request):
             obj['handler'] = obj['id']
         if isinstance(obj['participants'], str):
             obj['participants'] = obj['participants'].split(';')
-        if f"{request.json['current_user_username']}@{config.Serve.Domain}" not in obj['participants']:
-            obj['participants'].append(f"{request.json['current_user_username']}@{config.Serve.Domain}")
-        DB(request.json['current_user_username'], create_now=True).add_chat(**obj)
+        if f"{username}@{config.Serve.Domain}" not in obj['participants']:
+            obj['participants'].append(f"{username}@{config.Serve.Domain}")
+        DB(username, create_now=True).add_chat(**obj)
         return Response(status=200)
     message = {
-        "from": f"{request.json['current_user_username']}@{config.Serve.Domain}",
+        "from": f"{username}@{config.Serve.Domain}",
         "body": request.json['body'],
         "chat": request.json['chat'],
     }
-    current_db = DB(request.json['current_user_username'])
+    current_db = DB(username)
     current_db.add_message(encrypted=True, **message)
     message_temp = {i: message[i] for i in message}
     message_temp.update({'add_to': ''})
@@ -48,7 +54,7 @@ async def main(config, request):
     for receiver in receivers:
         if receiver != '':
             if receiver.split('@')[1] == config.Serve.Domain:
-                DB(request.json['current_user_username']).add_message(encrypted=True, **message)
+                DB(username).add_message(encrypted=True, **message)
             else:
                 requests.post(
                     f"https://{receiver.split('@')[1]}/protocols/lowend/add_message_to_server",

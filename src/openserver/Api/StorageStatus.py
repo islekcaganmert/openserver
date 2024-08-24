@@ -1,5 +1,6 @@
 from openserver.Helpers.Plus import check_plus
 import json
+import jwt
 import os
 
 
@@ -15,7 +16,10 @@ async def get_folder_size(path):
 
 
 async def main(config, request) -> dict:
-    if request.json['current_user_username'] == 'Guest':
+    username = request.json.get('current_user_username', None)
+    if username is None:
+        username = jwt.decode(request.json.get('cred'), config.Serve.Secret, algorithms=['HS256'])['username']
+    if username == 'Guest':
         return {
             'total': 0,
             'used': {
@@ -32,8 +36,7 @@ async def main(config, request) -> dict:
                 'photos': 0
             }
         }
-    username: str = request.json['current_user_username']
-    with open(f'./Users/{username}/.ID', 'r') as f:
+    with open(f'./Users/{username}/.ID') as f:
         id: dict = json.load(f)
     total_size_sym: str = getattr(config.Storage, f"Plus{check_plus(id)}")
     total_size = 1024

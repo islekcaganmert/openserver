@@ -1,12 +1,17 @@
 import json
 import os
 
+import jwt
+
 
 async def main(config, request):
-    if request.json['current_user_username'] == 'Guest':
+    username = request.json.get('current_user_username', None)
+    if username is None:
+        username = jwt.decode(request.json.get('cred'), config.Serve.Secret, algorithms=['HS256'])['username']
+    if username == 'Guest':
         return {}
     r = {}
-    path: str = f'./Users/{request.json['current_user_username']}/Contacts/'
+    path: str = f'./Users/{username}/Contacts/'
     for v in os.listdir(path):
         with open(f'{path}{v}', 'r') as f:
             r.update({v.removesuffix('.json'): json.load(f)})

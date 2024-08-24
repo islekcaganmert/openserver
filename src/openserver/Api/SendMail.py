@@ -2,6 +2,8 @@ import json
 
 import asyncio
 
+import jwt
+
 from openserver.Helpers.Communications import DB
 from flask import Response
 import requests
@@ -14,17 +16,20 @@ from Api.CurrentUserInfo import main as current_user_info
 
 
 async def main(config, request):
-    if request.json['current_user_username'] == 'Guest':
+    username = request.json.get('current_user_username', None)
+    if username is None:
+        username = jwt.decode(request.json.get('cred'), config.Serve.Secret, algorithms=['HS256'])['username']
+    if username == 'Guest':
         return Response(status=200)
     mail = {
         "body": request.json['body'],
         "cc": request.json['cc'].split(';'),
         "hashtag": None if request.json['hashtag'] == '' else request.json['hashtag'],
-        "sender": f"{request.json['current_user_username']}@{config.Serve.Domain}",
+        "sender": f"{username}@{config.Serve.Domain}",
         "subject": request.json['subject'],
         "to": request.json['to'].split(';')
     }
-    DB(request.json['current_user_username']).add_mail(mailbox='Sent', encrypted=True, **mail)
+    DB(username).add_mail(mailbox='Sent', encrypted=True, **mail)
     mail_temp = {i: mail[i] for i in mail}
     mail_temp.update({'add_to': ''})
     receivers = []
@@ -52,7 +57,7 @@ async def main(config, request):
     for receiver in receivers:
         if receiver != '':
             if receiver.split('@')[1] == config.Serve.Domain:
-                DB(request.json['current_user_username']).add_mail(mailbox='Primary', encrypted=True, **mail)
+                DB(username).add_mail(encrypted=True, **mail)
             else:
                 conns.append(asyncio.create_task(requests.post(
                     f"https://{receiver.split('@')[1]}/protocols/lowend/add_mail_to_server",

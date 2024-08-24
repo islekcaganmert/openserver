@@ -2,6 +2,8 @@ import json
 import os
 from datetime import datetime
 import asyncio
+
+import jwt
 from TheProtocols import User
 from openserver.Helpers.Communications import DB
 from openserver.Api.PullNotes import main as pull_notes
@@ -36,7 +38,10 @@ async def search_user(config, request) -> list:
 async def search_communications(config, request) -> list:
     keys = request.json['key'].lower().split(' ')
     r = []
-    comms = DB(request.json['current_user_username'])
+    username = request.json.get('current_user_username', None)
+    if username is None:
+        username = jwt.decode(request.json.get('cred'), config.Serve.Secret, algorithms=['HS256'])['username']
+    comms = DB(username)
     mailboxes = comms.list_mailboxes()
     for mailbox in mailboxes:
         for i in range(1, mailboxes[mailbox] + 1):

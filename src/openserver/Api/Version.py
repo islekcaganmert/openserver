@@ -19,11 +19,19 @@ async def main(config, software_info):
     else:
         os_data = {"family": system, "name": system, "version": "0"}
     os_data.update({"arch": platform.machine().replace('arm64', 'AArch64')})
+    membership_plans = []
+    for i in config.Membership.__dict__:
+        if isinstance(getattr(config.Membership, i), str):
+            membership_plans.append({
+                "name": i,
+                "storage": config.Membership.__dict__[i]
+            })
     return {
         "help": config.Policies.Help,
         "os": os_data,
         "rules": json.loads(config.Rules.json()),
         "software": json.loads(software_info.json()),
         "users": users,
-        "version": "3.0"
+        "membership_plans": membership_plans,
+        "version": "3.1"
     }
