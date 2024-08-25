@@ -57,11 +57,13 @@ class Chat(Base):
     title = Column(String)
     participants = Column(String)  # ;
 
-    def json(self):
+    def json(self=None):
         return {
+            "id": self.id,
             "image": self.image,
             "title": self.title,
-            "participants": self.participants.split(';')
+            "participants": self.participants.split(';'),
+            "last_index": 0
         }  # add last_index: int before sending
 
 
@@ -97,6 +99,7 @@ class DB:
         self.__session.commit()
 
     def get_mail(self, mailbox, id):
+        # noinspection PyArgumentList
         return self.__session.query(Mail).filter_by(mailbox=mailbox).all()[int(id) - 1].json()
 
     def move_mail(self, mailbox, id, move_to):
@@ -111,10 +114,10 @@ class DB:
         r = {chat.handler: chat.json() for chat in self.__session.query(Chat).order_by(Chat.title).all()}
         for message in self.__session.query(Message).order_by(Message.id).all():
             if message.chat not in r:
-                r.update({message.chat: {}})
+                r.update({message.chat: {'id': message.chat}})
         for chat in r:
-            r[chat.handler].update({
-                'last_index': len(self.__session.query(Message).order_by(Message.id).filter_by(chat=chat.id).all())
+            r[chat].update({
+                'last_index': len(self.__session.query(Message).order_by(Message.id).filter_by(chat=r[chat]['id']).all())
             })
         return r
 
@@ -139,7 +142,11 @@ class DB:
         self.__session.commit()
 
     def get_chat(self, id):
-        return self.__session.query(Chat).filter_by(id=id).all()[0].json()
+        if '@' in id:
+            return {'id': id, 'participants': [id]}
+        else:
+            return self.__session.query(Chat).filter_by(id=id).all()[0].json()
 
     def get_message(self, chat, id):
+        # noinspection PyArgumentList
         return self.__session.query(Message).filter_by(chat=chat).all()[int(id) - 1].json()

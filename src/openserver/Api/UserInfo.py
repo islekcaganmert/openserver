@@ -12,7 +12,7 @@ async def main(config, request):
     if '/' in username:
         report(Report.DirectoryEscalation)
         return Response(status=403)
-    with open(f'./Users/{username}/.ID', 'r') as f:
+    with open(f'./Users/{username}/.ID') as f:
         id: dict = json.load(f)
     id.update({'chamychain_public_key': '****************************************************************'})
     id.pop('chamychain_private_key')

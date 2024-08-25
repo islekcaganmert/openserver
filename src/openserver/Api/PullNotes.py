@@ -7,7 +7,7 @@ async def folder_to_dict(path):
     r = {}
     for v in os.listdir(path):
         if os.path.isfile(f'{path}{v}'):
-            with open(f'{path}{v}', 'r') as f:
+            with open(f'{path}{v}') as f:
                 r.update({v: f.read()})
         else:
             r.update({v: await folder_to_dict(f'{path}{v}/')})

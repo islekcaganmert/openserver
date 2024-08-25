@@ -1,6 +1,5 @@
 import json
 import os
-
 import jwt
 
 
@@ -13,6 +12,6 @@ async def main(config, request):
     r = {}
     path: str = f'./Users/{username}/Contacts/'
     for v in os.listdir(path):
-        with open(f'{path}{v}', 'r') as f:
+        with open(f'{path}{v}') as f:
             r.update({v.removesuffix('.json'): json.load(f)})
     return r

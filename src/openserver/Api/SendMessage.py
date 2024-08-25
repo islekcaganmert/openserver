@@ -1,3 +1,4 @@
+import asyncio
 import json
 
 import jwt
@@ -10,7 +11,7 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 from TheProtocols import User
-from Api.CurrentUserInfo import main as current_user_info
+from openserver.Api.CurrentUserInfo import main as current_user_info
 
 
 async def main(config, request):
@@ -35,12 +36,12 @@ async def main(config, request):
         "chat": request.json['chat'],
     }
     current_db = DB(username)
-    current_db.add_message(encrypted=True, **message)
+    current_db.add_message(encrypted=True, body=message['body'], chat=message['chat'], sender=message['from'])
     message_temp = {i: message[i] for i in message}
     message_temp.update({'add_to': ''})
     receivers = current_db.get_chat(request.json['chat'])['participants']
     signature = serialization.load_pem_private_key(
-        current_user_info(config, request)['rsa_private_key'],
+        (await current_user_info(config, request))['rsa_private_key'].encode(),
         password=None,
         backend=default_backend()
     ).sign(
@@ -50,13 +51,14 @@ async def main(config, request):
             salt_length=padding.PSS.MAX_LENGTH
         ),
         hashes.SHA512()
-    )
+    ).hex()
+    conns = []
     for receiver in receivers:
         if receiver != '':
             if receiver.split('@')[1] == config.Serve.Domain:
                 DB(username).add_message(encrypted=True, **message)
             else:
-                requests.post(
+                conns.append(asyncio.create_task(requests.post(
                     f"https://{receiver.split('@')[1]}/protocols/lowend/add_message_to_server",
                     json={
                         'add_to': receiver.split('@')[0],
@@ -70,8 +72,10 @@ async def main(config, request):
                                 algorithm=hashes.SHA512(),
                                 label=None
                             )
-                        ),
+                        ).hex(),
                         'signature': signature
                     }
-                )
+                )))
+    for conn in conns:
+        await conn
     return Response(status=200)

@@ -15,7 +15,7 @@ async def main(config, request):
         username = jwt.decode(request.json.get('cred'), config.Serve.Secret, algorithms=['HS256'])['username']
     if username == 'Guest':
         return Response(status=200)
-    with open(f'./Users/{username}/.ID', 'r') as f:
+    with open(f'./Users/{username}/.ID') as f:
         id: dict = json.load(f)
 
     key: str = request.json['key']

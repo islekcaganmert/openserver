@@ -34,8 +34,8 @@ def report(reason):
     DB('Administrator').add_mail(
         subject=subject,
         sender='SYSTEM',
-        to='Administrator@{}',
-        cc='',
+        to=['Administrator@{}'],
+        cc=[],
         hashtag=None,
         body=body,
         encrypted=True

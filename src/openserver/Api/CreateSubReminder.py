@@ -15,13 +15,14 @@ async def main(config, request):
         report(DirectoryEscalation)
         return Response(status=403)
     if f'{request.json['list']}.json' in os.listdir(f'./Users/{username}/Reminders'):
-        with open(f'./Users/{username}/Reminders/{request.json['list']}.json') as f:
-            db: list = json.load(f)
+        with open(f'./Users/{username}/Reminders/{request.json['list']}.json') as fr:
+            db: list = json.load(fr)
+        with open(f'./Users/{username}/Reminders/{request.json['list']}.json', 'w') as fw:
             if int(request.json['reminder']) < len(db):
                 db[int(request.json['reminder'])]['subs'].append({
                     "deadline": request.json['deadline'],
                     "status": False,
                     "title": request.json['title']
                 })
-                json.dump(db, f)
+                json.dump(db, fw)
     return Response(status=200)

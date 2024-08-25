@@ -5,7 +5,6 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from datetime import datetime, UTC
 import os
-from flask import Response
 
 
 async def main(config, request):
@@ -32,7 +31,7 @@ async def main(config, request):
             "rsa_public_key": ""
         }
     else:
-        with open(f'./Users/{username}/.ID', 'r') as f:
+        with open(f'./Users/{username}/.ID') as f:
             id: dict = json.load(f)
     id.update({'chamychain_public_key': '****************************************************************'})
     if username != 'Guest':

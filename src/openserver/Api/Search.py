@@ -16,7 +16,7 @@ async def search_user(config, request) -> list:
     for username in os.listdir('./Users/'):
         try:
             if username.lower() in keys or f"{username}@{config.Serve.Domain}" in keys:
-                user = json.load(open(f'./Users/{username}/.ID', 'r'))
+                user = json.load(open(f'./Users/{username}/.ID'))
                 r.append({
                     'title': f"{user['name']} {user['surname']}",
                     'url': username if '@' in username else f"{username}@{config.Serve.Domain}",
@@ -196,7 +196,6 @@ async def search_web(config, request) -> list:
 
 
 async def main(config, request) -> dict:
-    r = []
     tasks = []
     # Advertise health part
     for i in [

@@ -38,7 +38,7 @@ async def main(config, request) -> dict:
         }
     with open(f'./Users/{username}/.ID') as f:
         id: dict = json.load(f)
-    total_size_sym: str = getattr(config.Storage, f"Plus{check_plus(id)}")
+    total_size_sym: str = getattr(config.Membership, check_plus(config, id))
     total_size = 1024
     for i in ['KB', 'MB', 'GB', 'TB', 'PB']:
         if total_size_sym.endswith(i):

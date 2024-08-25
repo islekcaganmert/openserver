@@ -17,7 +17,7 @@ async def main(config, request):
         report(DirectoryEscalation)
         return Response(status=403)
     if f'{request.json['list']}.json' in os.listdir(f'./Users/{username}/Reminders'):
-        with open(f'./Users/{username}/Reminders/{request.json['list']}.json', 'r') as f:
+        with open(f'./Users/{username}/Reminders/{request.json['list']}.json') as f:
             db: list = json.load(f)
             db.append({
                 "deadline": request.json['deadline'],

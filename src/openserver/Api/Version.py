@@ -33,5 +33,5 @@ async def main(config, software_info):
         "software": json.loads(software_info.json()),
         "users": users,
         "membership_plans": membership_plans,
-        "version": "3.1"
+        "version": "3.0"
     }

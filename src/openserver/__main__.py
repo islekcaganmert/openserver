@@ -11,6 +11,7 @@ import yaml
 import json
 import sys
 import os
+# noinspection PyUnresolvedReferences
 import asyncio
 
 
@@ -77,9 +78,10 @@ class Config:
     class MembershipO:
         def __init__(self, data: dict) -> None:
             self.__dict__ = data
+            self.order = [i for i in data]
 
         def __getattr__(self, item):
-            return self.dict[item]
+            return self.__dict__[item]
 
     class Security:
         ImmutableIdEntries = ["birthday", "gender", "name", "surname", "rsa_private_key"]
