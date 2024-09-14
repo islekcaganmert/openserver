@@ -181,7 +181,7 @@ class Install:
     def rootfs():
         for i in ['Feed', 'Templates', 'Users']:
             os.mkdir(i)
-        for i in ['SignUpEmail']:
+        for i in ['SignUpEmail', 'SignInWarning']:
             with open(f'Templates/{i}.html', 'wb') as f:
                 with requests.get(f'https://github.com/islekcaganmert/openserver/raw/master/Assets/Templates/{i}.html') as r:
                     f.write(r.content)

@@ -1,0 +1,16 @@
+<title>Security Alert</title>
+<blockquote style="width:calc(100vw - 20px);padding-left:10px;padding-top:10px;">
+    <p></p>
+    <p style="font-size:50px;margin-top:-20px;">New sign in by {{ app.name }}</p>
+    <p style="margin-top:-20px;">
+        We noticed a new sign-in to your account by {{ app.name }}.
+        If this was you, you don’t need to do anything.
+        If not, change your password immediately.
+    </p>
+    <p><b>Extra details:</b></p>
+    <p>App: {{ app.name }} ({{ app.package_name }})</p>
+    <p style="margin-top:-5px;">Developer: {{ app.developer }}</p>
+    <p style="margin-top:-5px;">Time: {{ time }}</p>
+    <p style="margin-top:-5px;">IP: {{ ip }}</p>
+    <p style="margin-top:-5px;">User Agent: {{ user_agent }}</p>
+</blockquote>
