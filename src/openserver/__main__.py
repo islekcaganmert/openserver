@@ -112,19 +112,26 @@ if __name__ == '__main__':
         os.system(f"gunicorn -b {config.Serve.Host}:{config.Serve.Port} openserver.__main__:server")
 
 
-def check_password():
+def get_creds():
     if request.path == '/protocols/login':
-        cred = {
+        return {
             "username": request.json.get('username'),
             "password": request.json.get('password'),
         }
     elif request.json.get('cred', None) is None:
-        cred = {
+        return {
             "username": request.json.get('current_user_username'),
             "password": request.json.get('current_user_password'),
         }
     else:
-        cred = jwt.decode(request.json['cred'], config.Serve.Secret, algorithms=['HS256'])
+        return jwt.decode(request.json['cred'], config.Serve.Secret, algorithms=['HS256'])
+
+
+def check_password(token: str = None):
+    if token is not None:
+        cred = jwt.decode(token, config.Serve.Secret, algorithms=['HS256'])
+    else:
+        cred = get_creds()
     if cred['username'] == 'Guest':
         return True
     elif '/' in cred['username']:
@@ -180,6 +187,8 @@ async def server_router(endpoint):
             'get_feed_post': [request],
             'pull_library_data': [request],
             'push_library_data': [request],
+            'pull_app_preferences': [request],
+            'push_app_preferences': [request],
             'storage_status': [request],
             'pull_notes': [request],
             'edit_note': [request],
@@ -203,12 +212,37 @@ async def server_router(endpoint):
             'send_message': [request],
             'search': [request],
             'login': [request],
+            'storage_ls': [request],
+            'storage_new_folder': [request],
+            'storage_delete': [request],
 
         }[endpoint]))
     except Exception as e:
         if config.Serve.Debug:
             raise e
         return Response(status=500)
+
+
+@server.route('/protocols/storage/<username>/<path:path>', methods=['GET', 'POST'])
+async def storage(username: str, path: str):
+    # noinspection DuplicatedCode
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    relative_path = os.path.join(current_dir, f"Api/StorageRW.py")
+    spec = importlib.util.spec_from_file_location('storage_r_w', relative_path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    creds = {'username': 'Guest', 'token': None}
+    if request.headers.get('Authorization', None) is None:
+        return Response(status=401)
+    elif request.headers['Authorization'].split(' ')[0] == 'TheProtocols-Token':
+        creds = {'username': username, 'token': request.headers['Authorization'].split(' ')[1]}
+    else:
+        return Response(status=401)
+    if not check_password(token=creds['token']):
+        return Response(status=401)
+    path = ('/' + path + '/').replace('//', '/').replace('/../', '/')
+    path = path.replace('/./', '/').removesuffix('/').removeprefix('/')
+    return await mod.main(config, creds, request.method, path, **({'data': request.data} if request.method == 'POST' else {}))
 
 
 @server.route('/protocols/profile-photos/<username>.png')
