@@ -215,6 +215,12 @@ async def server_router(endpoint):
             'storage_ls': [request],
             'storage_new_folder': [request],
             'storage_delete': [request],
+            'list_rooms': [request],
+            'create_room': [request],
+            'list_things': [request],
+            'delete_room': [request],
+            'register_thing': [request],
+            'unregister_thing': [request],
 
         }[endpoint]))
     except Exception as e:
