@@ -17,13 +17,21 @@ async def main(config, request):
         report(DirectoryEscalation)
         return Response(status=403)
     app: str = request.json['app']
+    pieces = app.split('.')
+    pieces.reverse()
+    domain = '.'.join(pieces)
     dir: str = f'./Users/{username}/Library/Preferences/'
     if 'Preferences' not in os.listdir(f'./Users/{username}/Library'):
         os.mkdir(f'./Users/{username}/Library/Preferences')
     if app not in os.listdir(dir):
         with open(f'{dir}/{app}', 'w') as f:
-            f.write('{}')
-    with open(f'{dir}/{app}') as f:
+            resp = requests.get(f'https://{domain}/.well-known/app_info.json')
+            if resp.status_code == 200:
+                defaults = resp.json()['preferences']
+                json.dump(defaults, f)
+            else:
+                f.write('{}')
+    with open(f'{dir}{app}') as f:
         try:
             return json.load(f)
         except json.JSONDecodeError:
