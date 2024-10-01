@@ -1,20 +1,21 @@
 import os
-import jwt
 from flask import Response
 import json
-from openserver.Helpers.Report import report, DirectoryEscalation
+from openserver.Helpers.Report import report, DirectoryEscalation, PermissionDenied
+from openserver.Helpers.GetLogin import get_login
 
 
-async def main(config, request):
-    username = request.json.get('current_user_username', None)
-    if username is None:
-        username = jwt.decode(request.json.get('cred'), config.Serve.Secret, algorithms=['HS256'])['username']
+async def main(config, request) -> (list, Response):
+    username, permissions, package_name = get_login(config, request)
     if username == 'Guest':
         return Response(status=200)
     if '/' in request.json['app']:
-        report(DirectoryEscalation)
+        report(config, DirectoryEscalation)
         return Response(status=403)
     app: str = request.json['app']
+    if permissions and app != package_name and 'InterApp' not in permissions:
+        report(config, PermissionDenied)
+        return Response(status=403)
     # noinspection PyShadowingBuiltins
     dir: str = f'./Users/{username}/Library/Preferences/'
     if 'Preferences' not in os.listdir(f'./Users/{username}/Library'):

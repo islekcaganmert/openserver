@@ -1,9 +1,5 @@
 import json
-
 import asyncio
-
-import jwt
-
 from openserver.Helpers.Communications import DB
 from flask import Response
 import requests
@@ -13,14 +9,17 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 from TheProtocols import User
 from openserver.Api.CurrentUserInfo import main as current_user_info
+from openserver.Helpers.GetLogin import get_login
+from openserver.Helpers.Report import report, PermissionDenied
 
 
-async def main(config, request):
-    username = request.json.get('current_user_username', None)
-    if username is None:
-        username = jwt.decode(request.json.get('cred'), config.Serve.Secret, algorithms=['HS256'])['username']
+async def main(config, request) -> Response:
+    username, permissions, package_name = get_login(config, request)
     if username == 'Guest':
         return Response(status=200)
+    if permissions and 'MailSend' not in permissions:
+        report(config, PermissionDenied)
+        return Response(status=403)
     mail = {
         "body": request.json['body'],
         "cc": request.json['cc'].split(';'),

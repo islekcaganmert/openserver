@@ -3,14 +3,13 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from datetime import datetime, UTC
 from flask import Response
-from openserver.Helpers.Report import report
-import openserver.Helpers.Report as Report
+from openserver.Helpers.Report import report, DirectoryEscalation
 
 
-async def main(config, request):
+async def main(config, request) -> (dict, Response):
     username = request.json['username']
     if '/' in username:
-        report(Report.DirectoryEscalation)
+        report(config, DirectoryEscalation)
         return Response(status=403)
     with open(f'./Users/{username}/.ID') as f:
         id: dict = json.load(f)

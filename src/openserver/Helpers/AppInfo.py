@@ -1,10 +1,10 @@
 class AppInfo:
-    def __init__(self, software_info, config):
+    def __init__(self, software_info, config) -> None:
         self.software_info = software_info
         self.config = config
         self.__name__ = dict.__name__
 
-    def __call__(self):
+    def __call__(self) -> dict:
         return {
             "name": "OpenServer",
             "developer": self.software_info.developer,

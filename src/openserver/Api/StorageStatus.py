@@ -1,10 +1,12 @@
 from openserver.Helpers.Plus import check_plus
 import json
-import jwt
 import os
+from openserver.Helpers.GetLogin import get_login
+from openserver.Helpers.Report import report, PermissionDenied
+from flask import Response
 
 
-async def get_folder_size(path):
+async def get_folder_size(path: str) -> int:
     size = 0
     for root, dirs, files in os.walk(path):
         for f in files:
@@ -15,10 +17,8 @@ async def get_folder_size(path):
     return size
 
 
-async def main(config, request) -> dict:
-    username = request.json.get('current_user_username', None)
-    if username is None:
-        username = jwt.decode(request.json.get('cred'), config.Serve.Secret, algorithms=['HS256'])['username']
+async def main(config, request) -> (dict, Response):
+    username, permissions, package_name = get_login(config, request)
     if username == 'Guest':
         return {
             'total': 0,
@@ -36,6 +36,9 @@ async def main(config, request) -> dict:
                 'photos': 0
             }
         }
+    if permissions and 'ReadFile' not in permissions:
+        report(config, PermissionDenied)
+        return Response(status=403)
     with open(f'./Users/{username}/.ID') as f:
         id: dict = json.load(f)
     total_size_sym: str = getattr(config.Membership, check_plus(config, id))

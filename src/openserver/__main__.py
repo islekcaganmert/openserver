@@ -15,7 +15,7 @@ import os
 import asyncio
 
 
-def check_config():
+def check_config() -> None:
     if not ('Serve' in config and isinstance(config['Serve'], dict)):
         print('Config is misconfigured')
         sys.exit(1)
@@ -69,7 +69,7 @@ class Config:
         def __init__(self, new_accounts_allowed: bool) -> None:
             self.new_accounts_allowed: bool = new_accounts_allowed
 
-        def json(self):
+        def json(self) -> str:
             # noinspection PyUnresolvedReferences
             return json.dumps({
                 "new_accounts_allowed": self.new_accounts_allowed
@@ -80,7 +80,7 @@ class Config:
             self.__dict__ = data
             self.order = [i for i in data]
 
-        def __getattr__(self, item):
+        def __getattr__(self, item) -> any:
             return self.__dict__[item]
 
     class Security:
@@ -112,7 +112,7 @@ if __name__ == '__main__':
         os.system(f"gunicorn -b {config.Serve.Host}:{config.Serve.Port} openserver.__main__:server")
 
 
-def get_creds():
+def get_creds() -> dict:
     if request.path == '/protocols/login':
         return {
             "username": request.json.get('username'),
@@ -144,7 +144,7 @@ def check_password(token: str = None):
 
 
 @server.route('/protocols/lowend/<endpoint>', methods=['GET', 'POST'])
-async def lowend_router(endpoint):
+async def lowend_router(endpoint) -> Response:
     # noinspection DuplicatedCode
     current_dir = os.path.dirname(os.path.abspath(__file__))
     relative_path = os.path.join(current_dir, f"Lowend/{''.join([i.capitalize() for i in endpoint.split('_')])}.py")
@@ -165,7 +165,7 @@ async def lowend_router(endpoint):
 
 
 @server.route('/protocols/<endpoint>', methods=['GET', 'POST'])
-async def server_router(endpoint):
+async def server_router(endpoint) -> Response:
     # noinspection DuplicatedCode
     current_dir = os.path.dirname(os.path.abspath(__file__))
     relative_path = os.path.join(current_dir, f"Api/{''.join([i.capitalize() for i in endpoint.split('_')])}.py")
@@ -197,7 +197,6 @@ async def storage(username: str, path: str):
     spec = importlib.util.spec_from_file_location('storage_r_w', relative_path)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
-    creds = {'username': 'Guest', 'token': None}
     if request.headers.get('Authorization', None) is None:
         return Response(status=401)
     elif request.headers['Authorization'].split(' ')[0] == 'TheProtocols-Token':
@@ -212,7 +211,7 @@ async def storage(username: str, path: str):
 
 
 @server.route('/protocols/profile-photos/<username>.png')
-async def profile_photos(username):
+async def profile_photos(username) -> Response:
     with open(f'./Users/{username}/.ID') as id_file:
         id = json.load(id_file)
     if 'profile_photo' in id['settings']['profile_privacy']:
@@ -222,7 +221,7 @@ async def profile_photos(username):
 
 
 @server.route('/openserver/export-account', methods=['GET', 'POST'])
-async def export_account():
+async def export_account() -> (Response, str):
     if request.method == 'GET':
         return '''
 <form method="POST">
@@ -246,7 +245,7 @@ async def export_account():
 
 
 @server.route('/openserver/delete-account', methods=['GET', 'POST'])
-async def delete_account():
+async def delete_account() -> (str, Response):
     if request.method == 'GET':
         return '''
 <form method="POST">

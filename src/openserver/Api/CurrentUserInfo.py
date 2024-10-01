@@ -1,15 +1,13 @@
 import json
-import jwt
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from datetime import datetime, UTC
 import os
+from openserver.Helpers.GetLogin import get_login
 
 
-async def main(config, request):
-    username = request.json.get('current_user_username', None)
-    if username is None:
-        username = jwt.decode(request.json.get('cred'), config.Serve.Secret, algorithms=['HS256'])['username']
+async def main(config, request) -> dict:
+    username, permissions, package_name = get_login(config, request)
     if username == 'Guest':
         id = {
             "birthday": "2000-01-01",
@@ -48,4 +46,20 @@ async def main(config, request):
         id['settings'].update({'apps': {}})
     else:
         id['settings'].update({'apps': os.listdir(f"./Users/{username}/Library/Data/")})
+    if permissions and 'HiddenInformation' not in permissions:
+        for key in id['settings']['profile_privacy']:
+            if isinstance(id[key], int):
+                id[key] = 0
+            elif isinstance(id[key], str):
+                id[key] = ''
+            elif isinstance(id[key], list):
+                id[key] = []
+            elif isinstance(id[key], dict):
+                id[key] = {}
+            else:
+                id[key] = ['*' for _ in range((len(str(id[key]))))]
+        id.pop('settings')
+    if permissions and 'RSA' not in permissions:
+        id.pop('rsa_private_key')
+        id.pop('rsa_public_key')
     return id

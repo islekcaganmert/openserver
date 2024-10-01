@@ -1,9 +1,10 @@
 import os
+from openserver.Helpers.GetLogin import get_login
+from flask import Response
+from openserver.Helpers.Report import report, PermissionDenied
 
-import jwt
 
-
-async def folder_to_dict(path):
+async def folder_to_dict(path: str) -> dict:
     r = {}
     for v in os.listdir(path):
         if os.path.isfile(f'{path}{v}'):
@@ -14,10 +15,11 @@ async def folder_to_dict(path):
     return r
 
 
-async def main(config, request):
-    username = request.json.get('current_user_username', None)
-    if username is None:
-        username = jwt.decode(request.json.get('cred'), config.Serve.Secret, algorithms=['HS256'])['username']
+async def main(config, request) -> (dict, Response):
+    username, permissions, package_name = get_login(config, request)
     if username == 'Guest':
         return {}
+    if permissions and 'Notes' not in permissions:
+        report(config, PermissionDenied)
+        return Response(status=403)
     return await folder_to_dict(f'./Users/{username}/Notes/')

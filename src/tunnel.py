@@ -8,7 +8,7 @@ app = Flask(__name__)
 
 @app.route('/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE'])
 @app.route('/', defaults={'path': ''})
-def proxy(path):
+def proxy(path) -> Response:
     query = '?'
     for i in request.args:
         query += (i + '=' + request.args[i] + '&')

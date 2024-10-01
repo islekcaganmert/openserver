@@ -2,19 +2,17 @@ import hashlib
 import json
 from flask import Response
 import openserver.Helpers.IdEntryValidation as validate
-import openserver.Helpers as Helpers
-import jwt
-
-Report = Helpers.Report
-report = Report.report
+from openserver.Helpers.Report import report, PermissionDenied, PlusHacking, ModificationToImmutable, MisconfiguredPayload
+from openserver.Helpers.GetLogin import get_login
 
 
-async def main(config, request):
-    username = request.json.get('current_user_username', None)
-    if username is None:
-        username = jwt.decode(request.json.get('cred'), config.Serve.Secret, algorithms=['HS256'])['username']
+async def main(config, request) -> Response:
+    username, permissions, package_name = get_login(config, request)
     if username == 'Guest':
         return Response(status=200)
+    if permissions and 'ModifyID' not in permissions:
+        report(config, PermissionDenied)
+        return Response(status=403)
     with open(f'./Users/{username}/.ID') as f:
         id: dict = json.load(f)
 
@@ -26,7 +24,7 @@ async def main(config, request):
             if key.split('/')[1] not in id['settings']:
                 return Response(status=500)
             elif key.split('/')[1] in ['plus_until', 'plus_tier']:
-                report(Report.PlusHacking)
+                report(config, PlusHacking)
                 return Response(status=403)
         else:
             return Response(status=500)
@@ -34,7 +32,7 @@ async def main(config, request):
         return Response(status=500)
 
     if key in config.Security.ImmutableIdEntries:
-        report(Report.ModificationToImmutable)
+        report(config, ModificationToImmutable)
         return Response(status=403)
 
     if getattr(validate, key.replace('/', '_'))(value):
@@ -45,7 +43,7 @@ async def main(config, request):
         else:
             id.update({key: value})
     else:
-        report(Report.MisconfiguredPayload)
+        report(config, MisconfiguredPayload)
         return Response(status=403)
 
     with open(f'./Users/{username}/.ID', 'w') as f:

@@ -11,7 +11,7 @@ classifiers = [
     "Programming Language :: Python",
 ]
 requires-python = ">=3.10"
-dependencies = ["cffi==1.17.0", "cryptography==43.0.0", "pycparser==2.22", "Flask==3.0.3", "blinker==1.8.2", "click==8.1.7", "itsdangerous==2.2.0", "Jinja2==3.1.4", "MarkupSafe==2.1.5", "Werkzeug==3.0.3", "PyJWT==2.9.0"]
+dependencies = ["cffi==1.17.0", "cryptography==43.0.0", "pycparser==2.22", "Flask==3.0.3", "blinker==1.8.2", "click==8.1.7", "itsdangerous==2.2.0", "Jinja2==3.1.4", "MarkupSafe==2.1.5", "Werkzeug==3.0.3", "PyJWT==2.9.0", "beautifulsoup4==4.12.3", "soupsieve==2.6"]
 
 [project.urls]
 Donate = "https://www.buymeacoffee.com/islekcaganmert"

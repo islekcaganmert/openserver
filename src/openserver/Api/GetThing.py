@@ -1,17 +1,24 @@
+from openserver.Helpers.Report import report, PermissionDenied
+from datetime import datetime
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding
 from openserver.Api.CurrentUserInfo import main as current_user_info
 from flask import Response
 import requests
 import json
-import jwt
 import os
+from openserver.Helpers.GetLogin import get_login
 
 
-async def main(config, request) -> Response:
-    username = request.json.get('current_user_username', None)
-    if username is None:
-        username = jwt.decode(request.json.get('cred'), config.Serve.Secret, algorithms=['HS256'])['username']
+async def main(config, request) -> (Response, dict):
+    username, permissions, package_name = get_login(config, request)
     if username == 'Guest':
         return Response(status=200)
+    if permissions and ('IoT' not in permissions or 'IoT-Full' not in permissions):
+        report(config, PermissionDenied)
+        return Response(status=403)
     if 'IoT.json' in os.listdir(f"./Users/{username}/Library/"):
         with open(f"./Users/{username}/Library/IoT.json") as f:
             d = json.load(f)
@@ -41,5 +48,5 @@ async def main(config, request) -> Response:
         ).hex()
     })
     if resp.status_code != 200:
-        return {}, resp.status_code
-    return resp.json(), 200
+        return Response(status=resp.status_code)
+    return resp.json()

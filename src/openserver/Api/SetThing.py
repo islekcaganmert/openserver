@@ -3,16 +3,23 @@ from openserver.Api.GetThing import main as get_thing
 from flask import Response
 import requests
 import json
-import jwt
 import os
+from openserver.Helpers.GetLogin import get_login
+from openserver.Helpers.Report import report, PermissionDenied
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.backends import default_backend
+from datetime import datetime
 
 
-async def main(config, request) -> Response:
-    username = request.json.get('current_user_username', None)
-    if username is None:
-        username = jwt.decode(request.json.get('cred'), config.Serve.Secret, algorithms=['HS256'])['username']
+async def main(config, request) -> (Response, dict):
+    username, permissions, package_name = get_login(config, request)
     if username == 'Guest':
         return Response(status=200)
+    if permissions and 'IoT-Full' not in permissions:
+        report(config, PermissionDenied)
+        return Response(status=403)
     if 'IoT.json' in os.listdir(f"./Users/{username}/Library/"):
         with open(f"./Users/{username}/Library/IoT.json") as f:
             d = json.load(f)
@@ -44,5 +51,5 @@ async def main(config, request) -> Response:
         ).hex()
     })
     if resp.status_code != 200:
-        return Response(body=resp.content, status=resp.status_code, headers=resp.headers)
-    return get_thing(config, request)
+        return Response(resp.content, status=resp.status_code, headers=resp.headers)
+    return await get_thing(config, request)

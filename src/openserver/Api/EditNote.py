@@ -1,21 +1,21 @@
-import jwt
-
-from openserver.Helpers.Report import report, DirectoryEscalation
 from TheProtocols import Deleted
 from flask import Response
 import os
+from openserver.Helpers.GetLogin import get_login
+from openserver.Helpers.Report import report, PermissionDenied, DirectoryEscalation
 
 
-async def main(config, request):
-    username = request.json.get('current_user_username', None)
-    if username is None:
-        username = jwt.decode(request.json.get('cred'), config.Serve.Secret, algorithms=['HS256'])['username']
+async def main(config, request) -> Response:
+    username, permissions, package_name = get_login(config, request)
     if username == 'Guest':
         return Response(status=200)
+    if permissions and 'NotesWrite' not in permissions:
+        report(config, PermissionDenied)
+        return Response(status=403)
     print(request.json['path'])
     path: list[str] = request.json['path'].split('/')
     if '..' in path:
-        report(DirectoryEscalation)
+        report(config, DirectoryEscalation)
         return Response(status=403)
     value: str = request.json['value']
     if path[0] == '':

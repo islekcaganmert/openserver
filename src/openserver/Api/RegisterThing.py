@@ -1,15 +1,17 @@
 from flask import Response
 import json
-import jwt
 import os
+from openserver.Helpers.GetLogin import get_login
+from openserver.Helpers.Report import report, PermissionDenied
 
 
 async def main(config, request) -> Response:
-    username = request.json.get('current_user_username', None)
-    if username is None:
-        username = jwt.decode(request.json.get('cred'), config.Serve.Secret, algorithms=['HS256'])['username']
+    username, permissions, package_name = get_login(config, request)
     if username == 'Guest':
         return Response(status=200)
+    if permissions and 'IoT-Full' not in permissions:
+        report(config, PermissionDenied)
+        return Response(status=403)
     if 'IoT.json' in os.listdir(f"./Users/{username}/Library/"):
         with open(f"./Users/{username}/Library/IoT.json") as f:
             d = json.load(f)

@@ -8,7 +8,7 @@ from flask import Response
 import json
 
 
-async def main(_, request):
+async def main(_, request) -> Response:
     add_to: str = request.json.get('add_to', None)
     encrypted_object: str = request.json.get('encrypted_object', None)
     signature: str = request.json.get('signature', None)

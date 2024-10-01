@@ -4,7 +4,7 @@ import json
 import os
 
 
-async def main(config, software_info):
+async def main(config, software_info) -> dict:
     users = []
     for i in os.listdir('./Users/'):
         if i not in ['.DS_Store']:

@@ -6,7 +6,7 @@ from openserver.Helpers.Communications import DB
 from datetime import datetime, UTC
 
 
-async def main(config, request):
+async def main(config, request) -> dict:
     app = App(request.json.get('package'), not config.Serve.Debug)
     with open(f'./Templates/SignInWarning.html') as f:
         t = f.read()

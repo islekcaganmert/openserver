@@ -59,7 +59,7 @@ data = {
 }
 
 
-def yes_no(t):
+def yes_no(t: str) -> bool:
     answer = ''
     while answer not in ['y', 'n']:
         answer = input(f'{t} (y/n) ')
@@ -68,7 +68,7 @@ def yes_no(t):
 
 class OOBE:
     @staticmethod
-    def activation():
+    def activation() -> None:
         print("\n\n\nActivate OpenServer\n")
         print("OpenServer is completely free and open source.")
         print("However if you want access to support and want guarantee, you must activate it with a license key.")
@@ -79,7 +79,7 @@ class OOBE:
         data['activation'] = key
 
     @staticmethod
-    def licenses():
+    def licenses() -> None:
         print('\n\n\nLicenses')
         print('''\n
     This program is distributed in the hope that it will be useful,
@@ -93,7 +93,7 @@ class OOBE:
             sys.exit(1)
 
     @staticmethod
-    def admin():
+    def admin() -> None:
         print("\n\n\nRegion\n")
         for i in [
             ['country', "Enter your country's two-letter code: ", str],
@@ -133,7 +133,7 @@ class OOBE:
         data['admin']['password'] = hashlib.sha3_512(password.encode()).hexdigest()
 
     @staticmethod
-    def config():
+    def config() -> None:
         print('\n\n\nConfigure Network\n')
         data['config']['secure'] = input('Do you want to enable HTTPS? (Y/n) ') != 'n'
         if data['activation'] == '':
@@ -165,7 +165,7 @@ class OOBE:
         print('\nSetup wizard suggest you to check Server.yaml after setup for more configurations.')
 
     @staticmethod
-    def terms():
+    def terms() -> None:
         print('\n\n\nTerms of Service\n')
         with open('.OpenServer-Setup-Wizard', 'w') as f:
             f.write('<h1>Terms of Service</h1>\n')
@@ -178,7 +178,7 @@ class OOBE:
 
 class Install:
     @staticmethod
-    def rootfs():
+    def rootfs() -> None:
         for i in ['Feed', 'Templates', 'Users']:
             os.mkdir(i)
         for i in ['SignUpEmail', 'SignInWarning']:
@@ -192,7 +192,7 @@ class Install:
             f.write(data['terms'])
 
     @staticmethod
-    def config():
+    def config() -> None:
         secret = ''
         for _ in range(128):
             secret += '0123456789abcdef'[random.randint(0, 15)]
@@ -226,7 +226,7 @@ class Install:
             f.write('    ProfilePrivacy: []\n')
 
     @staticmethod
-    def admin():
+    def admin() -> None:
         os.mkdir(f'./Users/Administrator/')
         with open(f'./Users/Administrator/.ID', 'w') as f:
             json.dump(data['admin'], f)
@@ -240,33 +240,33 @@ class Install:
         mails.add_mail(
             sign_up_email_title,
             f'Administrator@{data["config"]["domain"]}',
-            [f"Administrator@{data["config"]["domain"]}"],
+            [f"Administrator@{data['config']['domain']}"],
             [],
             None,
             sign_up_email,
             encrypted=True
         )
-        with open(f"./Users/Administrator/Contacts/Administrator@{data["config"]["domain"]}.json", 'w') as f:
+        with open(f"./Users/Administrator/Contacts/Administrator@{data['config']['domain']}.json", 'w') as f:
             json.dump({
                 "Relation": "Self",
                 "Socials": []
             }, f)
 
     @staticmethod
-    def check_update():
+    def check_update() -> bool:
         latest = requests.get('https://islekcaganmert.vercel.app/Backend/OpenServer/Update.py').content.decode()
         installed = openserver_version
         return latest == installed
 
     @staticmethod
-    def update():
+    def update() -> None:
         latest = requests.get('https://islekcaganmert.vercel.app/Backend/OpenServer/Update.py').content.decode()
         filename = f"OpenServer-{latest}-py3-none-any.whl"
         os.system(f"wget https://github.com/islekcaganmert/openserver/releases/download/{latest}/{filename}")
         os.system(f"pip install ./{filename}")
 
 
-def main():
+def main() -> None:
     print("\nWelcome to OpenServer!")
     print("Setup Wizard will guide to setup your new network.")
     OOBE.activation()

@@ -1,13 +1,15 @@
 from flask import Response
-import jwt
 import os
+from openserver.Helpers.GetLogin import get_login
+from openserver.Helpers.Report import report, PermissionDenied
 
 
-async def main(config, request):
-    username = request.json.get('current_user_username', None)
-    if username is None:
-        username = jwt.decode(request.json.get('cred'), config.Serve.Secret, algorithms=['HS256'])['username']
+async def main(config, request) -> Response:
+    username, permissions, package_name = get_login(config, request)
     if username == 'Guest':
+        return Response(status=403)
+    if permissions and 'WriteFile' not in permissions:
+        report(config, PermissionDenied)
         return Response(status=403)
     if 'Documents' not in os.listdir(f"./Users/{username}/"):
         os.mkdir(f"./Users/{username}/Documents")
