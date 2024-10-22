@@ -11,7 +11,7 @@ import hashlib
 import openserver.Helpers.IdEntryValidation as validate
 
 
-async def main(config, args):
+async def main(config, args) -> Response:
 
     new_id = {}
 
@@ -55,14 +55,14 @@ async def main(config, args):
             1000000000000000000000000000000000000000000000000000000000000000,
             9999999999999999999999999999999999999999999999999999999999999999
         )})
-        os.mkdir(f'./Users/{args.json['username']}/')
-        with open(f'./Users/{args.json['username']}/.ID', 'w') as f:
+        os.mkdir(f"./Users/{args.json['username']}/")
+        with open(f"./Users/{args.json['username']}/.ID", 'w') as f:
             json.dump(new_id, f)
-        for i in ['Library', 'Contacts', 'Library/Data', 'Notes', 'Reminders', 'Documents', 'Pictures', 'Movies', 'Music']:
-            os.mkdir(f'./Users/{args.json['username']}/{i}/')
-        os.system(f'cp -r ./profile_picture.png ./Users/{args.json['username']}/.PP.png')
+        for i in ['Library', 'Contacts', 'Library/Data', 'Library/Preferences', 'Notes', 'Reminders', 'Documents', 'Pictures', 'Movies', 'Music']:
+            os.mkdir(f"./Users/{args.json['username']}/{i}/")
+        os.system(f"cp -r ./profile_picture.png ./Users/{args.json['username']}/.PP.png")
         mails = DB(args.json['username'], create_now=True)
-        with open(f'./Templates/SignUpEmail.html', 'r') as f:
+        with open(f'./Templates/SignUpEmail.html') as f:
             sign_up_email = f.read()
             sign_up_email_title = sign_up_email.split('<title>')[1].split('</title>')[0]
         mails.add_mail(
@@ -77,8 +77,7 @@ async def main(config, args):
         with open(f"./Users/{args.json['username']}/Contacts/{args.json['username']}@{config.Serve.Domain}.json", 'w') as f:
             json.dump({
                 "Relation": "Self",
-                "SMTP": {},
-                "Socials": {}
+                "Socials": []
             }, f)
 
     except KeyError:

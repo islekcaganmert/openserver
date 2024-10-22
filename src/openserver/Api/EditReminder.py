@@ -1,19 +1,24 @@
 from flask import Response
 import json
 import os
-from openserver.Helpers.Report import report, DirectoryEscalation
+from openserver.Helpers.Report import report, DirectoryEscalation, PermissionDenied
+from openserver.Helpers.GetLogin import get_login
 
 
-async def main(config, request):
-    if request.json['current_user_username'] == 'Guest':
+async def main(config, request) -> Response:
+    username, permissions, package_name = get_login(config, request)
+    if username == 'Guest':
         return Response(status=200)
-    if '..' in request.json['list']:
-        report(DirectoryEscalation)
+    if permissions and 'RemindersWrite' not in permissions:
+        report(config, PermissionDenied)
         return Response(status=403)
-    if f'{request.json['list']}.json' in os.listdir(f'./Users/{request.json['current_user_username']}/Reminders'):
-        with open(f'./Users/{request.json['current_user_username']}/Reminders/{request.json['list']}.json') as f:
+    if '..' in request.json['list']:
+        report(config, DirectoryEscalation)
+        return Response(status=403)
+    if f"{request.json['list']}.json" in os.listdir(f'./Users/{username}/Reminders'):
+        with open(f"./Users/{username}/Reminders/{request.json['list']}.json") as f:
             db = json.load(f)
             if int(request.json['id']) < len(db):
-                db[int(request.json['id'])] = json.loads(request.json['data'])
+                db[int(request.json['id'])] = json.loads(request.json['data']) if isinstance(request.json['data'], str) else request.json['data']
                 json.dump(db, f)
     return Response(status=200)

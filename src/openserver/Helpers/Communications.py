@@ -19,7 +19,7 @@ class Mail(Base):
     encrypted = Column(Boolean, default=False)
     date_received = Column(DateTime, default=datetime.now(UTC))
 
-    def json(self):
+    def json(self) -> dict:
         return {
             "subject": self.subject,
             "date_received": self.date_received.strftime('%Y-%m-%d %H:%M'),
@@ -41,7 +41,7 @@ class Message(Base):
     encrypted = Column(Boolean, default=False)
     date_received = Column(DateTime, default=datetime.now(UTC))
 
-    def json(self):
+    def json(self) -> dict:
         return {
             "from": self.sender,
             "body": self.body,
@@ -57,11 +57,13 @@ class Chat(Base):
     title = Column(String)
     participants = Column(String)  # ;
 
-    def json(self):
+    def json(self=None) -> dict:
         return {
+            "id": self.id,
             "image": self.image,
             "title": self.title,
-            "participants": self.participants.split(';')
+            "participants": self.participants.split(';'),
+            "last_index": 0
         }  # add last_index: int before sending
 
 
@@ -73,7 +75,7 @@ class DB:
                 Base.metadata.create_all(self.__engine)
             self.__session = sessionmaker(bind=self.__engine)()
 
-    def list_mailboxes(self):
+    def list_mailboxes(self) -> dict:
         r = {'Archive': 0, 'Primary': 0, 'Promotions': 0, 'Sent': 0, 'Social': 0, 'Spam': 0, 'Trash': 0}
         for mail in self.__session.query(Mail).order_by(Mail.id):
             if mail.mailbox not in r:
@@ -82,7 +84,7 @@ class DB:
                 r[mail.mailbox] += 1
         return r
 
-    def add_mail(self, subject, sender, to, cc, hashtag, body, encrypted, mailbox='Primary'):
+    def add_mail(self, subject, sender, to, cc, hashtag, body, encrypted, mailbox='Primary') -> None:
         new_mail = Mail(
             mailbox=mailbox,
             subject=subject,
@@ -96,10 +98,11 @@ class DB:
         self.__session.add(new_mail)
         self.__session.commit()
 
-    def get_mail(self, mailbox, id):
+    def get_mail(self, mailbox, id) -> dict:
+        # noinspection PyArgumentList
         return self.__session.query(Mail).filter_by(mailbox=mailbox).all()[int(id) - 1].json()
 
-    def move_mail(self, mailbox, id, move_to):
+    def move_mail(self, mailbox, id, move_to) -> None:
         mail = self.__session.query(Mail).filter_by(mailbox=mailbox).all()[int(id) - 1]
         if move_to == '-':
             self.__session.delete(mail)
@@ -107,18 +110,18 @@ class DB:
             mail.mailbox = move_to
         self.__session.commit()
 
-    def list_chats(self):
-        r = {chat.handler: chat.json() for chat in self.__session.query(Chat).order_by(Chat.title).all()}
+    def list_chats(self) -> dict:
+        r: dict[str, dict] = {str(chat.handler): chat.json() for chat in self.__session.query(Chat).order_by(Chat.title).all()}
         for message in self.__session.query(Message).order_by(Message.id).all():
             if message.chat not in r:
-                r.update({message.chat: {}})
+                r.update({str(message.chat): {'id': message.chat}})
         for chat in r:
-            r[chat.handler].update({
-                'last_index': len(self.__session.query(Message).order_by(Message.id).filter_by(chat=chat.id).all())
+            r[chat].update({
+                'last_index': len(self.__session.query(Message).order_by(Message.id).filter_by(chat=r[chat]['id']).all())
             })
         return r
 
-    def add_message(self, sender, body, chat, encrypted):
+    def add_message(self, sender, body, chat, encrypted) -> None:
         new_message = Message(
             chat=chat,
             sender=sender,
@@ -128,7 +131,7 @@ class DB:
         self.__session.add(new_message)
         self.__session.commit()
 
-    def add_chat(self, handler, image, title, participants):
+    def add_chat(self, handler, image, title, participants) -> None:
         new_chat = Chat(
             handler=handler,
             image=image,
@@ -138,8 +141,12 @@ class DB:
         self.__session.add(new_chat)
         self.__session.commit()
 
-    def get_chat(self, id):
-        return self.__session.query(Chat).filter_by(id=id).all()[0].json()
+    def get_chat(self, id) -> dict:
+        if '@' in id:
+            return {'id': id, 'participants': [id]}
+        else:
+            return self.__session.query(Chat).filter_by(id=id).all()[0].json()
 
-    def get_message(self, chat, id):
+    def get_message(self, chat, id) -> dict:
+        # noinspection PyArgumentList
         return self.__session.query(Message).filter_by(chat=chat).all()[int(id) - 1].json()

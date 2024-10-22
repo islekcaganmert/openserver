@@ -2,10 +2,10 @@ import os
 from bs4 import BeautifulSoup
 
 
-async def main(config) -> dict:
+async def main(_) -> dict:
     feed = []
     for i in os.listdir('./Feed/'):
-        content = open(f'./Feed/{i}', 'r', encoding='UTF-8').read()
+        content = open(f'./Feed/{i}', encoding='UTF-8').read()
         f = BeautifulSoup(content, 'html.parser')
         try:
             feed += [{

@@ -2,10 +2,13 @@ import json
 import os
 from datetime import datetime
 import asyncio
+from flask import Response
 from TheProtocols import User
 from openserver.Helpers.Communications import DB
 from openserver.Api.PullNotes import main as pull_notes
 from openserver.Api.GetReminders import main as get_reminders
+from openserver.Helpers.GetLogin import get_login
+from openserver.Helpers.Report import report, PermissionDenied
 
 
 async def search_user(config, request) -> list:
@@ -14,7 +17,7 @@ async def search_user(config, request) -> list:
     for username in os.listdir('./Users/'):
         try:
             if username.lower() in keys or f"{username}@{config.Serve.Domain}" in keys:
-                user = json.load(open(f'./Users/{username}/.ID', 'r'))
+                user = json.load(open(f'./Users/{username}/.ID'))
                 r.append({
                     'title': f"{user['name']} {user['surname']}",
                     'url': username if '@' in username else f"{username}@{config.Serve.Domain}",
@@ -36,7 +39,8 @@ async def search_user(config, request) -> list:
 async def search_communications(config, request) -> list:
     keys = request.json['key'].lower().split(' ')
     r = []
-    comms = DB(request.json['current_user_username'])
+    username, permissions, package_name = get_login(config, request)
+    comms = DB(username)
     mailboxes = comms.list_mailboxes()
     for mailbox in mailboxes:
         for i in range(1, mailboxes[mailbox] + 1):
@@ -73,7 +77,7 @@ async def search_communications(config, request) -> list:
     return r
 
 
-def search_notes_in(path, folder, keys):
+def search_notes_in(path, folder, keys) -> dict:
     r = {}
     for i in folder:
         if isinstance(folder[i], dict):
@@ -142,56 +146,61 @@ async def search_reminders(config, request) -> list:
     return r
 
 
-async def search_iot(config, request) -> list:
+async def search_iot(_, request) -> list:
     keys = request.json['key'].lower().split(' ')
     r = []
     return r
 
 
-async def search_files(config, request) -> list:
+async def search_files(_, request) -> list:
     keys = request.json['key'].lower().split(' ')
     r = []
     return r
 
 
-async def search_music(config, request) -> list:
+async def search_music(_, request) -> list:
     keys = request.json['key'].lower().split(' ')
     r = []
     return r
 
 
-async def search_tv(config, request) -> list:
+async def search_tv(_, request) -> list:
     keys = request.json['key'].lower().split(' ')
     r = []
     return r
 
 
-async def search_social(config, request) -> list:
+async def search_social(_, request) -> list:
     keys = request.json['key'].lower().split(' ')
     r = []
     return r
 
 
-async def search_calendar(config, request) -> list:
+async def search_calendar(_, request) -> list:
     keys = request.json['key'].lower().split(' ')
     r = []
     return r
 
 
-async def search_feed(config, request) -> list:
+async def search_feed(_, request) -> list:
     keys = request.json['key'].lower().split(' ')
     r = []
     return r
 
 
-async def search_web(config, request) -> list:
+async def search_web(_, request) -> list:
     keys = request.json['key'].lower().split(' ')
     r = []
     return r
 
 
-async def main(config, request) -> list:
-    r = []
+async def main(config, request) -> (dict, Response):
+    username, permissions, package_name = get_login(config, request)
+    if username == 'Guest':
+        return {'results': await search_web(config, request)}
+    if permissions and 'Search' not in permissions:
+        report(config, PermissionDenied)
+        return Response(status=403)
     tasks = []
     # Advertise health part
     for i in [
@@ -213,4 +222,6 @@ async def main(config, request) -> list:
     r = []
     for result in results:
         r += result
+        if '://' not in r[-1]['url']:
+            r[-1]['url'] = f"theprotocols://{r[-1]['url']}"
     return {'results': r}

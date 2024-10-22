@@ -3,12 +3,11 @@ from openserver.Helpers.Report import report, DirectoryEscalation
 from flask import Response
 
 
-async def main(config, request) -> dict:
-    feed = []
+async def main(config, request) -> (Response, dict):
     if '/' in request.json['id']:
-        report(DirectoryEscalation)
+        report(config, DirectoryEscalation)
         return Response(status=403)
-    content = open(f'./Feed/{request.json['id']}.html', 'r', encoding='UTF-8').read()
+    content = open(f"./Feed/{request.json['id']}.html", encoding='utf-8').read()
     f = BeautifulSoup(content, 'html.parser')
     try:
         return {

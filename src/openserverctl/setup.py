@@ -52,13 +52,14 @@ data = {
         "rules": {
             "new_accounts_allowed": True
         },
-        "storage": ['100MB', '1GB', '5GB', '20GB']
+        "storage": ['100MB', '1GB', '5GB', '20GB'],
+        "membership_plans": ["Free", "Plus", "Pro", "Ultra"]
     },
     "terms": ""
 }
 
 
-def yes_no(t):
+def yes_no(t: str) -> bool:
     answer = ''
     while answer not in ['y', 'n']:
         answer = input(f'{t} (y/n) ')
@@ -67,7 +68,7 @@ def yes_no(t):
 
 class OOBE:
     @staticmethod
-    def activation():
+    def activation() -> None:
         print("\n\n\nActivate OpenServer\n")
         print("OpenServer is completely free and open source.")
         print("However if you want access to support and want guarantee, you must activate it with a license key.")
@@ -78,7 +79,7 @@ class OOBE:
         data['activation'] = key
 
     @staticmethod
-    def licenses():
+    def licenses() -> None:
         print('\n\n\nLicenses')
         print('''\n
     This program is distributed in the hope that it will be useful,
@@ -92,7 +93,7 @@ class OOBE:
             sys.exit(1)
 
     @staticmethod
-    def admin():
+    def admin() -> None:
         print("\n\n\nRegion\n")
         for i in [
             ['country', "Enter your country's two-letter code: ", str],
@@ -132,7 +133,7 @@ class OOBE:
         data['admin']['password'] = hashlib.sha3_512(password.encode()).hexdigest()
 
     @staticmethod
-    def config():
+    def config() -> None:
         print('\n\n\nConfigure Network\n')
         data['config']['secure'] = input('Do you want to enable HTTPS? (Y/n) ') != 'n'
         if data['activation'] == '':
@@ -147,7 +148,10 @@ class OOBE:
         if input('Do you want to configure rules now? (Y/n) ') != 'n':
             data['config']['rules']['new_accounts_allowed'] = yes_no('Do you want to allow new accounts?')
         for i in range(4):
-            inp = input(f'Enter storage limit for tier {i}: (ex. 100MB, 25GB, 2TB) ')
+            inp = input(f'Name the tier {i}: ')
+            data['config']['membership_plans'][i] = inp
+        for i in range(4):
+            inp = input(f"Enter storage limit for {data['config']['membership_plans'][i]}: (ex. 100MB, 25GB, 2TB) ")
             ok = False
             for j in ['MB', 'GB', 'TB']:
                 if inp.endswith(j):
@@ -161,23 +165,23 @@ class OOBE:
         print('\nSetup wizard suggest you to check Server.yaml after setup for more configurations.')
 
     @staticmethod
-    def terms():
+    def terms() -> None:
         print('\n\n\nTerms of Service\n')
         with open('.OpenServer-Setup-Wizard', 'w') as f:
             f.write('<h1>Terms of Service</h1>\n')
         print('You will be redirected to your preferred text editor to write terms of service.')
         os.system(f"{input('Please enter the executable path of a text editor: ')} .OpenServer-Setup-Wizard")
-        with open('.OpenServer-Setup-Wizard', 'r') as f:
+        with open('.OpenServer-Setup-Wizard') as f:
             data['terms'] = f.read()
         os.remove('.OpenServer-Setup-Wizard')
 
 
 class Install:
     @staticmethod
-    def rootfs():
+    def rootfs() -> None:
         for i in ['Feed', 'Templates', 'Users']:
             os.mkdir(i)
-        for i in ['SignUpEmail']:
+        for i in ['SignUpEmail', 'SignInWarning']:
             with open(f'Templates/{i}.html', 'wb') as f:
                 with requests.get(f'https://github.com/islekcaganmert/openserver/raw/master/Assets/Templates/{i}.html') as r:
                     f.write(r.content)
@@ -188,7 +192,10 @@ class Install:
             f.write(data['terms'])
 
     @staticmethod
-    def config():
+    def config() -> None:
+        secret = ''
+        for _ in range(128):
+            secret += '0123456789abcdef'[random.randint(0, 15)]
         with open('Server.yaml', 'a') as f:
             # Serve
             f.write('Serve:\n')
@@ -197,6 +204,7 @@ class Install:
             f.write('    Debug: false\n')
             f.write(f'    Secure: {"true" if data["config"]["secure"] else "false"}\n')
             f.write(f'    Domain: "{data["config"]["domain"]}"\n\n')
+            f.write(f'    Secret: {secret}\n\n')
             # Policies
             f.write(f'Policies:\n')
             f.write('    ToS: "ToS.html"\n')
@@ -207,9 +215,9 @@ class Install:
             for i in data['config']['rules']:
                 f.write(f'    {i}: {"true" if data["config"]["rules"][i] else "false"}\n')
             # Storage
-            f.write('\nStorage:\n')
+            f.write('\nMembership:\n')
             for i in range(4):
-                f.write(f'    Plus{i}: {data["config"]["storage"][i]}\n')
+                f.write(f'    {data["config"]["membership_plans"][i]}: {data["config"]["storage"][i]}\n')
             # Security
             f.write('\nSecurity:\n')
             f.write('    ImmutableIdEntries: ["birthday", "gender", "name", "surname", "rsa_private_key"]\n\n')
@@ -218,48 +226,47 @@ class Install:
             f.write('    ProfilePrivacy: []\n')
 
     @staticmethod
-    def admin():
+    def admin() -> None:
         os.mkdir(f'./Users/Administrator/')
         with open(f'./Users/Administrator/.ID', 'w') as f:
             json.dump(data['admin'], f)
-        for i in ['Library', 'Contacts', 'Library/Data', 'Notes', 'Reminders', 'Documents', 'Pictures', 'Movies', 'Music']:
+        for i in ['Library', 'Contacts', 'Library/Data', 'Library/Preferences', 'Notes', 'Reminders', 'Documents', 'Pictures', 'Movies', 'Music']:
             os.mkdir(f'./Users/Administrator/{i}/')
         os.system(f'cp -r ./profile_picture.png ./Users/Administrator/.PP.png')
         mails = DB('Administrator', create_now=True)
-        with open(f'./Templates/SignUpEmail.html', 'r') as f:
+        with open(f'./Templates/SignUpEmail.html') as f:
             sign_up_email = f.read()
             sign_up_email_title = sign_up_email.split('<title>')[1].split('</title>')[0]
         mails.add_mail(
             sign_up_email_title,
             f'Administrator@{data["config"]["domain"]}',
-            [f"Administrator@{data["config"]["domain"]}"],
+            [f"Administrator@{data['config']['domain']}"],
             [],
             None,
             sign_up_email,
             encrypted=True
         )
-        with open(f"./Users/Administrator/Contacts/Administrator@{data["config"]["domain"]}.json", 'w') as f:
+        with open(f"./Users/Administrator/Contacts/Administrator@{data['config']['domain']}.json", 'w') as f:
             json.dump({
                 "Relation": "Self",
-                "SMTP": {},
-                "Socials": {}
+                "Socials": []
             }, f)
 
     @staticmethod
-    def check_update():
+    def check_update() -> bool:
         latest = requests.get('https://islekcaganmert.vercel.app/Backend/OpenServer/Update.py').content.decode()
         installed = openserver_version
         return latest == installed
 
     @staticmethod
-    def update():
+    def update() -> None:
         latest = requests.get('https://islekcaganmert.vercel.app/Backend/OpenServer/Update.py').content.decode()
         filename = f"OpenServer-{latest}-py3-none-any.whl"
         os.system(f"wget https://github.com/islekcaganmert/openserver/releases/download/{latest}/{filename}")
         os.system(f"pip install ./{filename}")
 
 
-def main():
+def main() -> None:
     print("\nWelcome to OpenServer!")
     print("Setup Wizard will guide to setup your new network.")
     OOBE.activation()

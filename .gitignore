@@ -1,3 +1,5 @@
 .venv
 dist
 src/openserver.egg-info
+requirements.old/
+tests/

@@ -1,8 +1,8 @@
 from datetime import datetime, UTC
 
 
-def check_plus(id: dict) -> int:
+def check_plus(config, id: dict) -> str:
     if int(datetime.now(UTC).strftime('%Y%m%d')) < id['settings']['plus_until']:
-        return id['settings']['plus_tier']
+        return config.Membership.order[id['settings']['plus_tier']]
     else:
-        return 0
+        return config.Membership.order[0]

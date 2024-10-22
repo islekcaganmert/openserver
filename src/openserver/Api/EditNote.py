@@ -1,19 +1,23 @@
-from openserver.Helpers.Report import report, DirectoryEscalation
 from TheProtocols import Deleted
 from flask import Response
 import os
+from openserver.Helpers.GetLogin import get_login
+from openserver.Helpers.Report import report, PermissionDenied, DirectoryEscalation
 
 
-async def main(config, request):
-    if request.json['current_user_username'] == 'Guest':
+async def main(config, request) -> Response:
+    username, permissions, package_name = get_login(config, request)
+    if username == 'Guest':
         return Response(status=200)
+    if permissions and 'NotesWrite' not in permissions:
+        report(config, PermissionDenied)
+        return Response(status=403)
     print(request.json['path'])
     path: list[str] = request.json['path'].split('/')
     if '..' in path:
-        report(DirectoryEscalation)
+        report(config, DirectoryEscalation)
         return Response(status=403)
     value: str = request.json['value']
-    username: str = request.json['current_user_username']
     if path[0] == '':
         path.pop(0)
     directory: str = f'./Users/{username}/Notes'

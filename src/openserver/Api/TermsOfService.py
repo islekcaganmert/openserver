@@ -1,5 +1,4 @@
-async def main(config):
-    r = ''
-    with open(config.Policies.ToS, 'r') as f:
+async def main(config) -> str:
+    with open(config.Policies.ToS) as f:
         r = f.read()
     return r
